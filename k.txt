@@ -1,0 +1,60 @@
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.ml.feature.{VectorAssembler, StandardScaler}
+import org.apache.spark.ml.clustering.KMeans
+import org.apache.spark.ml.evaluation.ClusteringEvaluator
+
+val spark = SparkSession.builder
+  .appName("KMeansClusteringExample")
+  .getOrCreate()
+
+import spark.implicits._
+
+val data = Seq(
+  (25, 50000, 60),
+  (30, 60000, 70),
+  (35, 75000, 80),
+  (20, 30000, 50),
+  (40, 80000, 90),
+  (45, 90000, 85),
+  (28, 55000, 65),
+  (32, 65000, 75)
+)
+
+val df = data.toDF("age", "income", "spending_score")
+
+val assembler = new VectorAssembler()
+  .setInputCols(Array("age", "income", "spending_score"))
+  .setOutputCol("features")
+
+val assembledDF = assembler.transform(df)
+
+val scaler = new StandardScaler()
+  .setInputCol("features")
+  .setOutputCol("scaled_features")
+  .setWithStd(true)
+  .setWithMean(true)
+
+val scalerModel = scaler.fit(assembledDF)
+val scaledDF = scalerModel.transform(assembledDF)
+
+val kmeans = new KMeans()
+  .setFeaturesCol("scaled_features")
+  .setPredictionCol("cluster")
+  .setK(3)
+  .setSeed(42)
+
+val model = kmeans.fit(scaledDF)
+
+val predictions = model.transform(scaledDF)
+
+val evaluator = new ClusteringEvaluator()
+  .setPredictionCol("cluster")
+  .setFeaturesCol("scaled_features")
+  .setMetricName("silhouette")
+
+val silhouetteScore = evaluator.evaluate(predictions)
+
+println(s"Silhouette Score: $silhouetteScore")
+predictions.select("age", "income", "spending_score", "cluster").show()
+
+spark.stop()
