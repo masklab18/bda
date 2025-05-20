@@ -1,0 +1,46 @@
+agent1.sources = logSource
+agent1.channels = memoryChannel
+agent1.sinks = fileSink
+ 
+# Configure the source (spooling directory)
+agent1.sources.logSource.type = spooldir
+agent1.sources.logSource.spoolDir = /opt/flume/logs/input
+agent1.sources.logSource.fileHeader = true
+ 
+# Configure the channel
+agent1.channels.memoryChannel.type = memory
+agent1.channels.memoryChannel.capacity = 1000
+agent1.channels.memoryChannel.transactionCapacity = 100
+ 
+# Configure the sink (write to file)
+agent1.sinks.fileSink.type = file_roll
+agent1.sinks.fileSink.channel = memoryChannel
+agent1.sinks.fileSink.sink.directory = /opt/flume/logs/output
+agent1.sinks.fileSink.sink.rollInterval = 10
+ 
+# Connect source and sink to channel
+agent1.sources.logSource.channels = memoryChannel
+agent1.sinks.fileSink.channel = memoryChannel
+ 
+-----------------------------------------------------------------
+sudo mkdir -p /opt/flume/logs/input
+sudo mkdir -p /opt/flume/logs/output
+sudo chown -R $USER:$USER /opt/flume/logs
+ 
+---------------------------------------------------------------
+ 
+echo '127.0.0.1 - - [08/May/2025:12:00:00 +0000] "GET /index.html HTTP/1.1" 200 2326' > /opt/flume/logs/sample_log.log
+---------------------------------------------------------
+mv /opt/flume/logs/sample_log.log /opt/flume/logs/input/
+-----------------------------------------------------------------
+flume-ng agent \
+--conf $FLUME_HOME/conf \
+--conf-file /opt/flume/conf/web-log-analysis.conf \
+--name agent1 \
+-Dflume.root.logger=INFO,console
+ 
+-------------------------------------------------------------
+After about 10 seconds (roll interval), check(NEW Terminal ):
+ 
+ls /opt/flume/logs/output
+cat /opt/flume/logs/output/*
