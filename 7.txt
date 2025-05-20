@@ -1,0 +1,76 @@
+Program7- USE Hive to Create, alter and drop databases, tables.
+
+Step 1: Cmd, Right click, Run as administrator 
+Type- start-all.cmd
+Minimize all screens
+
+Step 2:: Cmd, Right click, Run as administrator 
+Type- StartNetworkServer -h 0.0.0.0
+Minimize the screen
+
+Step 3 : Cmd, Right click, Run as administrator 
+Type- cd C:\hive\bin
+      hive
+hive>
+
+PROGRAM EXECUTION-
+
+//Create Database
+
+hive >CREATE DATABASE IF NOT EXISTS database_usn;
+hive >USE database_usn;
+
+//To display a list of all existing databases
+hive >show databases;
+
+//To Create Table
+CREATE TABLE IF NOT EXISTS student (
+    id INT,
+    name STRING,
+    age INT,
+    department STRING,
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+//To view table structure
+hive > DESCRIBE student;
+
+//To insert values into table
+hive >INSERT INTO TABLE student
+VALUES (1, 'John Doe', 20, 'Engineering'),
+(2, 'Jane Smith', 22, 'Marketing'),
+(3, 'Michael Johnson', 21, 'Sales'),
+(4, 'Emily Davis', 23, 'HR'),
+(5, 'James Brown', 24, 'Finance');
+
+//To read table rows
+SELECT * FROM student;
+
+//To Delete One Row (e.g., with id = 2):
+Since Hive doesn't support direct row deletion, we'll overwrite the table excluding the row you want to delete.
+Hive >INSERT OVERWRITE TABLE student
+SELECT * FROM student WHERE id != 2;
+
+//Verify
+SELECT * FROM student;
+
+
+//To alter table
+ALTER TABLE student ADD COLUMNS(semester INT);   //By default NULL values are assigned for semester
+
+//To add values to newly added column
+INSERT OVERWRITE TABLE student
+SELECT id,name,age,department,'6' AS semester FROM student;
+
+//Verify
+SELECT *FROM student;
+
+
+//To delete a table
+DROP TABLE student;
+
+//To delete database
+DROP DATABASE database_usn;
+
